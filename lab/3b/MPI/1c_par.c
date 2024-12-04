@@ -54,9 +54,9 @@ int main(int argc, char **argv) {
             a[i][j] = sin(5 * a[i - 2][j + 3]);
         }
     }
-    t_end = MPI_Wtime();
+//    t_end = MPI_Wtime();
     MPI_Bcast(a, ISIZE * JSIZE, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+//    MPI_Barrier(MPI_COMM_WORLD);
 
     if(ISIZE % size > rank)
     {
@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
             line_array[(i - i_start) * (JSIZE - 3) + j] = sin(5 * a[i - 2][j + 3]);
         }
     }
+    t_end = MPI_Wtime();
 
     if (rank != 0) {
         MPI_Send(line_array, (i_end - i_start) * (JSIZE - 3), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
@@ -143,6 +144,7 @@ int main(int argc, char **argv) {
         record(ff, arr);
         fclose(ff);
     }
+//    t_end = MPI_Wtime();
     MPI_Finalize();
 
     if (rank == 0) {

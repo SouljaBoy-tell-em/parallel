@@ -1,118 +1,84 @@
 #include <stdio.h>
-// #include <omp.h>
-#include <math.h>
 #include <stdlib.h>
+#include <math.h>
 
-#define eps 0.00001
-#define X0 -10.0
-#define XLAST 10.0
-#define Y0 sqrt(2)
-#define YLAST sqrt(2)
+double* calculate(int N, double leftBorder);
+void diffScheme(double **A, double *Y, int N, double h);
+void solution(double **A, double *Y, int n);
 
-double f(double a, double y) {
-    return a * y * (y * y - 1);
-}
+double* calculate(int N, double leftBorder) {
 
-void initA(double **A, double a, int N) {
-    A[0][0] = f(a, Y0) / Y0;
-    A[N - 1][N - 1] = f(a, YLAST) / YLAST;
+    double *Y = (double *) malloc(N * sizeof(double));
+    Y[0] = 0;
+    Y[N - 1] = leftBorder;
+    for (int i = 0; i < N; i++)
+        Y[i] = Y[0] + i * (Y[N - 1] - Y[0]) / (N - 1);
 
-    double h = (XLAST - X0) / (N - 1);
-    // #pragma omp parallel for
-        for (int i = 1; i < N - 1; i++) {
-            A[i][i - 1] = 1 / (h * h);
-            A[i][i] = -2 / (h * h);
-            A[i][i + 1] = 1 / (h * h);
-        }
-}
+    double h = leftBorder / (N - 1);
+    double **A = (double **)malloc((N - 2) * sizeof(double *));
+    for (int i = 0; i < N - 2; i++)
+        A[i] = (double *)malloc((N - 1) * sizeof(double));
 
-void initF(double *F, double a, int N, double *Y) {
-    F[0] = f(a, Y0);
-    F[N - 1] = f(a, YLAST);
-    for (int i = 1; i < N - 1; i++) {
-        F[i] = f(a, Y[i + 1]) / 12 +  5 * f(a, Y[i]) / 6 + f(a, Y[i - 1]) / 12;
-    }
-}
+    #pragma omp parallel for collapse(threads_amount)
+    for (int i = 0; i < 3; i++) {
+        diffScheme(A, Y, N, h);
 
-double* solve(double** A, double* F, int N) {
-    double* Y = (double*) malloc(N * sizeof(double)), max = 0;
+        double* block = (double *)malloc((N - 2) * sizeof(double));
+        for (int i = 0; i < N - 2; i++)
+            block[i] = -(Y[i + 2] - 2 * Y[i + 1] + Y[i] - h * h / 12 * (Y[i + 2] + 10 * Y[i + 1] + Y[i]));
 
-    int index = 0;
-    for(int k = 0; k < N; k++) {
-        max = fabs(A[k][k]);
-        index = k;
-        for (int i = k + 1; i < N; i++) {
-            if (fabs(A[i][k]) > max) {
-                max = fabs(A[i][k]);
-                index = i;
-            }
-        }
+        for (int j = 0; j < N - 2; j++)
+            A[j][N - 2] = block[j];
 
-        if (max < eps)
-            return 0;
-
-        double temp = 0;
-        for (int j = 0; j < N; j++) {
-            temp = A[k][j];
-            A[k][j] = A[index][j];
-            A[index][j] = temp;
-        }
-
-        temp = F[k];
-        F[k] = F[index];
-        F[index] = temp;
-        for (int i = k; i < N; i++) {
-            temp = A[i][k];
-            if (fabs(temp) < eps)
-                continue;
-
-            for (int j = k; j < N; j++)
-                A[i][j] = A[i][j] / temp;
-            F[i] = F[i] / temp;
-
-            if (i == k)
-                continue;
-
-            for (int j = 0; j < N; j++)
-                A[i][j] = A[i][j] - A[k][j];
-            F[i] = F[i] - F[k];
-        }
+        solution(A, block, N - 2);
+        for (int j = 0; j < N - 2; j++)
+            Y[j + 1] += block[j];
     }
 
-    for (int k = N - 1; k >= 0; k--) {
-        Y[k] = F[k];
-        for (int i = 0; i < k; i++)
-            F[i] = F[i] - A[i][k] * Y[k];
-    }
     return Y;
 }
 
-// 1st arg - amount of points;
-// 2nd arg - the parameter 'a';
+void diffScheme(double **A, double *Y, int N, double h) {
+    for (int i = 0; i < N - 2; i++)
+        for (int j = 0; j < N - 2; j++)
+            A[i][j] = 0;
+
+    for (int i = 0; i < N - 2; i++)
+        A[i][i] = -2 - 5 * h * h * exp(Y[i + 1]) / 6;
+
+    for (int i = 0; i < N - 3; i++)
+        A[i][i + 1] = 1 - (h * h / 12) * exp(Y[i + 2]);
+
+    for (int i = 1; i < N - 2; i++)
+        A[i][i - 1] = 1 - (h * h / 12) * exp(Y[i]);
+}
+
+void solution(double **A, double *Y, int N) {
+    for (int k = 0; k < N - 1; k++) {
+        for (int i = k + 1; i < N; i++) {
+            double factor = A[i][k] / A[k][k];
+            for (int j = k; j < N + 1; j++)
+                A[i][j] -= factor * A[k][j];
+        }
+    }
+
+    for (int i = N - 1; i >= 0; i--) {
+        Y[i] = A[i][N] / A[i][i];
+        for (int j = 0; j < i; j++)
+            A[j][N] -= A[j][i] * Y[i];
+    }
+}
+
 int main(int argc, char **argv) {
     int N = atoi(argv[1]);
-    double a = atof(argv[2]);
+    double leftborder = atof(argv[2]);
 
-    double *F = (double *) malloc(N * sizeof(double));
+    double *Y = calculate(N, leftborder);
 
-    double *Y = (double *) malloc(N * sizeof(double));
-    for (int i = 0; i < N; i++) {
-        Y[i] = sqrt(2);
-    }
+    FILE *rec = fopen("lab.txt", "w");
+    for (int i = 0; i < N; i++)
+        fprintf(rec, "%lf\n", Y[i]);
+    fclose(rec);
 
-    double **A = (double **) malloc(N * sizeof(double *));
-    for (int i = 0; i < N; i++) {
-        A[i] = (double *) malloc(N * sizeof(double));
-    }
-
-    initA(A, a, N);
-    initF(F, a, N, Y);
-    Y = solve(A, F, N);
-
-    initF(F, a, N, Y);
-    Y = solve(A, F, N);
-
-    for (int i = 0; i < N; i++) {
-        printf("Y[%d] = %lf\n", i, Y[i]);
-    }
+    return 0;
 }

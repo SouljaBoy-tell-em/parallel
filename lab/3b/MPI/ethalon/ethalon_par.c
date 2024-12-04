@@ -89,6 +89,10 @@ int main(int argc, char *argv[]) {
 
         fclose(ff);
     }
+
+    if (rank == 0) {
+        printf("Elapsed time: %f\n", t_end - t_start);
+    }
+
     MPI_Finalize();
-    printf("Elapsed time: %f\n", t_end - t_start);
 }

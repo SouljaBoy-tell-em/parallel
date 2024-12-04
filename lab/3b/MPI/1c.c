@@ -34,6 +34,7 @@ int main(int argc, char **argv)
         fprintf(ff,"\n");
     }
     fclose(ff);
+//    gettimeofday(&end, NULL);
 
     double delta = (double)(end.tv_usec - start.tv_usec) / 1000000;
     ff = fopen("ethalon_dataset_1c.txt", "w");

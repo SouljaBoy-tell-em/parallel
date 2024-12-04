@@ -18,7 +18,7 @@ S = []
 for i in range(0, len(par_data[0]), 1):
     amount.append(i)
     S.append(ethalon_data[0][0] / par_data[0][i])
-    print(f'THREADS: {i + 1} ->', ethalon_data[0][0] / ((i + 1) * par_data[0][i]))
+    print(f'THREADS: {i + 2} ->', ethalon_data[0][0] / ((i + 2) * par_data[0][i]))
 
 plt.grid()
 plt.plot(amount, S)
