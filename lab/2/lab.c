@@ -69,6 +69,7 @@ void solution(double **A, double *Y, int N, int threads_amount) {
             for (int i = N - 1; i >= 0; i--) {
                 Y[i] = A[i][N] / A[i][i];
 
+            #pragma omp parallel for num_threads(threads_amount)
                 for (int j = 0; j < i; j++)
                     A[j][N] -= A[j][i] * Y[i];
             }
