@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import sys
 
 data = []
 with open('lab.txt') as file:
@@ -25,4 +26,5 @@ for i in range(0, 20, 2):
     plt.show()
 
 
-print('impact:', min(min(ethalon_time)) / min(min(par_time)))
+print('acceleration:', min(min(ethalon_time)) / min(min(par_time)))
+print('impact:', min(min(ethalon_time)) / (float(sys.argv[1]) * min(min(par_time))))

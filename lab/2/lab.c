@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
         strcat(fileName, "lab_par.txt");
     }
     printf("File name: %s\n", fileName);
-    FILE* rec = fopen(fileName, "w");
+    FILE* rec = fopen(fileName, "a");
 
     for (int i = 0; i < N; i++)
         fprintf(rec, "%lf ", i * leftborder / (N - 1));
