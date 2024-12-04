@@ -19,7 +19,6 @@ double* calculate(int N, double leftBorder) {
     for (int i = 0; i < N - 2; i++)
         A[i] = (double *)malloc((N - 1) * sizeof(double));
 
-    #pragma omp parallel for collapse(threads_amount)
     for (int i = 0; i < 3; i++) {
         diffScheme(A, Y, N, h);
 
@@ -44,13 +43,13 @@ void diffScheme(double **A, double *Y, int N, double h) {
             A[i][j] = 0;
 
     for (int i = 0; i < N - 2; i++)
-        A[i][i] = -2 - 5 * h * h * exp(Y[i + 1]) / 6;
+        A[i][i] = -2 - 5 * h * h * exp(-Y[i + 1]) / 6;
 
     for (int i = 0; i < N - 3; i++)
-        A[i][i + 1] = 1 - (h * h / 12) * exp(Y[i + 2]);
+        A[i][i + 1] = 1 - (h * h / 12) * exp(-Y[i + 2]);
 
     for (int i = 1; i < N - 2; i++)
-        A[i][i - 1] = 1 - (h * h / 12) * exp(Y[i]);
+        A[i][i - 1] = 1 - (h * h / 12) * exp(-Y[i]);
 }
 
 void solution(double **A, double *Y, int N) {
@@ -75,9 +74,14 @@ int main(int argc, char **argv) {
 
     double *Y = calculate(N, leftborder);
 
-    FILE *rec = fopen("lab.txt", "w");
+    FILE *rec = fopen("lab.txt", "a");
     for (int i = 0; i < N; i++)
-        fprintf(rec, "%lf\n", Y[i]);
+        fprintf(rec, "%lf ", i * leftborder / (N - 1));
+    fprintf(rec, "\n");
+    for (int i = 0; i < N; i++) {
+        fprintf(rec, "%lf ", Y[i]);
+    }
+    fprintf(rec, "\n");
     fclose(rec);
 
     return 0;

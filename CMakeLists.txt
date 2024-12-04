@@ -21,4 +21,5 @@ add_executable(untitled
         test.c
         lab/3b/MPI/1c_par.c
         lab/2/lab.c
+        lab/2/run.c
 )
