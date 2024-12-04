@@ -56,21 +56,20 @@ void diffScheme(double **A, double *Y, int N, double h, int threads_amount) {
 }
 
 void solution(double **A, double *Y, int N, int threads_amount) {
-    double factor = 0;
-    int k, i, j;
-        for (k = 0; k < N - 1; k++) {
-            for (i = k + 1; i < N; i++) {
-                factor = A[i][k] / A[k][k];
+        for (int k = 0; k < N - 1; k++) {
+            #pragma omp parallel for num_threads(threads_amount)
+            for (int i = k + 1; i < N; i++) {
+                double factor = A[i][k] / A[k][k];
 
-                for (j = k; j < N + 1; j++)
+                for (int j = k; j < N + 1; j++)
                     A[i][j] -= factor * A[k][j];
             }
         }
 
-            for (i = N - 1; i >= 0; i--) {
+            for (int i = N - 1; i >= 0; i--) {
                 Y[i] = A[i][N] / A[i][i];
 
-                for (j = 0; j < i; j++)
+                for (int j = 0; j < i; j++)
                     A[j][N] -= A[j][i] * Y[i];
             }
 }
